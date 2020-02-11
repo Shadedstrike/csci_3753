@@ -1,0 +1,1 @@
+cmd_/home/user/dev_csci/modules/helloModule.ko := ld -r -m elf_x86_64 -z max-page-size=0x200000 -T ./scripts/module-common.lds --build-id  -o /home/user/dev_csci/modules/helloModule.ko /home/user/dev_csci/modules/helloModule.o /home/user/dev_csci/modules/helloModule.mod.o ;  true
