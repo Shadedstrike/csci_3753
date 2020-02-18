@@ -3,16 +3,21 @@
 #include <fcntl.h>
 #include <stdbool.h>
 #include <unistd.h> //avoid implicit error
+#include <string.h>
 ///dev/pa2_character_device c 62 0
 #define DEVICENAME "/dev/pa2_char_device" //define name and such
 #define BUFFER_SIZE 1024
+char *buffer;
 
 int main(){
+	printf("welcome to the main function\n"); 
 	char command_input;
 	int length, whence, new_offset;
-	char buffer[BUFFER_SIZE];
+	static char *user_buffer; //declare user buf
 
-	int file = open(*DEVICENAME, O_RDWR); //open the device
+	user_buffer = malloc(BUFFER_SIZE);
+
+	int file = open(DEVICENAME, O_RDWR | O_APPEND); //open the device
 	printf("file opening is status %d \n", file);
 
 	bool running = true;
@@ -29,18 +34,23 @@ int main(){
 
 		switch(command_input){
 			case 'r':
+			buffer = malloc(BUFFER_SIZE * sizeof(char));
 				printf("read$> How many bytes to read?: ");
 				scanf("%d", &length);
 				read(file, buffer, length);
-				printf("read$> %s\n", buffer); // print that buffer
+				printf("read$> %s\n", buffer); // print that user_buffer
 				while(getchar() != '\n'); // check for end line
+        free(buffer);
 				break;
 
 			case 'w':
+				buffer = malloc(BUFFER_SIZE * sizeof(char));
 				printf("write$> ");
 				scanf("%s", buffer);
-				write(file, buffer, BUFFER_SIZE); // write the buffer to file
+				int writesize = strlen(buffer);
+				write(file, buffer, writesize); // write the user_buffer to file
 				while (getchar() != '\n'); // check for end line
+				free(buffer);
 				break;
 
 			case 's':
