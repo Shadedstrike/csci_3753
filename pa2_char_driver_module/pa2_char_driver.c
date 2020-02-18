@@ -9,20 +9,18 @@
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("April Ott");
 
+/* Define device_buffer and other global data structures you will need here */
+
+
 #define BUFFER_SIZE 1024
 
-static char device_buffer[BUFFER_SIZE]; //create the buffer, kernel-side
+//62 is the device major number
+
+static char *device_buffer; //create the buffer, kernel-side
 
 // count open/close functions.
 int open_count = 0;
 int close_count = 0;
-
-
-
-
-
-
-/* Define device_buffer and other global data structures you will need here */
 
 
 ssize_t pa2_char_driver_read (struct file *pfile, char __user *buffer, size_t length, loff_t *offset)
@@ -66,9 +64,6 @@ ssize_t pa2_char_driver_write (struct file *pfile, const char __user *buffer, si
 	copy_from_user(device_buffer + *offset, buffer, length);
 
 	printk(KERN_ALERT "The device has been written to, bytes: %d, current offset: %lld  \n", strlen(buffer), *offset);
-
-
-
 	return length;
 }
 
@@ -96,7 +91,7 @@ int pa2_char_driver_close (struct inode *pinode, struct file *pfile)
 
 loff_t pa2_char_driver_seek (struct file *pfile, loff_t offset, int whence)
 {
-	loff_t current_pos; //hold the current position
+	loff_t current_pos = 0; //hold the current position
 
 	/* Update open file position according to the values of offset and whence */
 	if (whence == 0) { //If the value of whence is 0 (SEEK_SET), the current position is set to the value of the offset.
@@ -106,10 +101,16 @@ loff_t pa2_char_driver_seek (struct file *pfile, loff_t offset, int whence)
 		current_pos += offset; //increment by offset
 	}
 	if (whence == 3) { //current position is set to offset bytes before the end of the file
-     //??????????? wording is confusing as hell
+    current_pos = BUFFER_SIZE - offset;
 	}
 	if (whence != 0 && whence != 1 && whence !=2) { //if user attempts to seek before or after the file
-		printk(KERN_ALERT "You cannot access the file outside it's bounds!!! \n");
+		printk(KERN_ALERT "Wrong whence value inputted! \n");
+	}
+	if (current_pos < 0) {
+		printk(KERN_ALERT "ERROR: Cannot seek before the buffer! \n");
+	}
+	if (current_pos > BUFFER_SIZE) {
+		printk(KERN_ALERT "ERROR: Cannot after before the buffer! \n");
 	}
 	printk(KERN_ALERT "The current offset in this seek is: %lld \n", offset);
 
@@ -139,9 +140,9 @@ static int pa2_char_driver_init(void)
 	register_chrdev(62, "pa2_char_driver", &pa2_char_driver_file_operations);
 
 	/* allocate memory to store user data */
-	device_buffer = kmalloc(BUFFER_SIZE, GFP_KERNEL);
+	device_buffer = kmalloc(sizeof *device_buffer, GFP_KERNEL);
 
-	printk(KERN_ALERT "device buffer allocated!\n");
+	printk(KERN_ALERT "device buffer allocated!, device registered\n");
 
 	return 0;
 }
