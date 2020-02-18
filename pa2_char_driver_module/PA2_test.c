@@ -5,20 +5,20 @@
 #include <unistd.h> //avoid implicit error
 #include <string.h>
 ///dev/pa2_character_device c 62 0
-#define DEVICENAME "/dev/pa2_char_device" //define name and such
+#define DEVICE "/dev/pa2_character_device"   //define name and such
 #define BUFFER_SIZE 1024
 char *buffer;
 
 int main(){
-	printf("welcome to the main function\n"); 
+	printf("welcome to the main function\n");
 	char command_input;
 	int length, whence, new_offset;
 	static char *user_buffer; //declare user buf
 
 	user_buffer = malloc(BUFFER_SIZE);
 
-	int file = open(DEVICENAME, O_RDWR | O_APPEND); //open the device
-	printf("file opening is status %d \n", file);
+	int file = open(DEVICE, O_RDWR | O_APPEND); //open the device
+	printf("file opening status =  %d \n", file);
 
 	bool running = true;
 	while(running){ //while still running
@@ -30,7 +30,7 @@ int main(){
 		printf("press	'e' to exit from device\n");
 		printf("press	anything else to keep reading or writing to the device\n");
 		printf("command$> ");
-		scanf("%c", &command_input);
+		scanf(" %c", &command_input);
 
 		switch(command_input){
 			case 'r':
@@ -47,8 +47,8 @@ int main(){
 				buffer = malloc(BUFFER_SIZE * sizeof(char));
 				printf("write$> ");
 				scanf("%s", buffer);
-				int writesize = strlen(buffer);
-				write(file, buffer, writesize); // write the user_buffer to file
+			//	int writesize = strlen(buffer);
+				write(file, buffer, sizeof(buffer)); // write the user_buffer to file
 				while (getchar() != '\n'); // check for end line
 				free(buffer);
 				break;
