@@ -7,23 +7,27 @@
 ///dev/pa2_character_device c 62 0
 #define DEVICE "/dev/pa2_character_device"   //define name and such
 #define BUFFER_SIZE 1024
-char *buffer;
 
 int main(){
 	printf("welcome to the main function\n");
+	char *buffer;
 	char command_input;
 	int length, whence, new_offset;
-	static char *user_buffer; //declare user buf
+	//static char *user_buffer; //declare user buf
 
-	user_buffer = malloc(BUFFER_SIZE);
+	//user_buffer = malloc(BUFFER_SIZE);
 
-	int file = open(DEVICE, O_RDWR | O_APPEND); //open the device
-	printf("file opening status =  %d \n", file);
+	int file = open(DEVICE, O_RDWR); //open the device
+	if (file >= 0) {
+		printf("file opening status =  %d, good to go \n", file); //verify file is opened succesfully
+	}
+	else{
+		printf("file opening status =  %d, not good! \n", file);
+	}
 
 	bool running = true;
 	while(running){ //while still running
 		printf("Here are the commands you can use:\n");
-
 		printf("press	'r' to read from device\n");
 		printf("press	'w' to write to device\n");
 		printf("press	's' to seek into device\n");
@@ -34,9 +38,12 @@ int main(){
 
 		switch(command_input){
 			case 'r':
-			buffer = malloc(BUFFER_SIZE * sizeof(char));
+				buffer = malloc(BUFFER_SIZE);
+				bzero(buffer,BUFFER_SIZE);
+
 				printf("read$> How many bytes to read?: ");
 				scanf("%d", &length);
+				printf("entered %d length in read function\n", length );
 				read(file, buffer, length);
 				printf("read$> %s\n", buffer); // print that user_buffer
 				while(getchar() != '\n'); // check for end line
@@ -44,11 +51,14 @@ int main(){
 				break;
 
 			case 'w':
-				buffer = malloc(BUFFER_SIZE * sizeof(char));
+				buffer = malloc(BUFFER_SIZE);
+				bzero(buffer,BUFFER_SIZE);
+
 				printf("write$> ");
 				scanf("%s", buffer);
+				printf("user buffer is currently %s and buffer size is: %d \n", buffer, strlen(buffer));
 			//	int writesize = strlen(buffer);
-				write(file, buffer, sizeof(buffer)); // write the user_buffer to file
+				write(file, buffer, strlen(buffer)); // write the user_buffer to file
 				while (getchar() != '\n'); // check for end line
 				free(buffer);
 				break;
@@ -63,7 +73,7 @@ int main(){
 				scanf("%d", &whence);
 				printf("\nwrite$> Enter an offset value: ");
 				scanf("%d", &new_offset);
-				llseek(file, new_offset, whence);
+				lseek(file, new_offset, whence);
 				break;
 
 			case 'e':

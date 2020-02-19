@@ -21,7 +21,7 @@ loff_t pa2_char_driver_seek (struct file *pfile, loff_t offset, int whence);
 
 //62 is the device major number
 
-static char *device_buffer; //create the buffer, kernel-side
+char *device_buffer; //create the buffer, kernel-side
 
 // count open/close functions.
 int open_count = 0;
@@ -36,30 +36,29 @@ ssize_t pa2_char_driver_read (struct file *pfile, char __user *buffer, size_t le
 	/* offset will be set to current position of the opened file after read*/
 	/* copy_to_user function: source is device_buffer and destination is the userspace buffer *buffer */
   //int buff_size = strlen(device_buffer);
-  int bytes_input; //bytes in and out
+  int bytes_to_read; //bytes in and out
   int bytes_read;
   max_bytes = BUFFER_SIZE - *offset;
   printk(KERN_ALERT "User has entered the read function \n");
 
-
-  if (sizeof(buffer) == 0) {
-    printk(KERN_ALERT "The buffer is currently empty \n");
-    return 0;
-  }
+  // if (strlen(buffer) == 0) {
+  //   printk(KERN_ALERT "The buffer is currently empty \n");
+  //   return 0;
+  // }
 
   if (max_bytes > length) { //if bigger
-    bytes_input = length;
+    bytes_to_read = length;
   }
   else {
-    bytes_input = max_bytes;
+    bytes_to_read = BUFFER_SIZE - length;
   }
 
-  bytes_read = bytes_input - copy_to_user(buffer,pfile->f_pos + length,bytes_input); //copy to user userspace
+  bytes_read = bytes_to_read - copy_to_user(buffer,device_buffer+ *offset,bytes_to_read); //copy to user userspace
 
   *offset += bytes_read;
 	//print out total bytes moved
 	printk(KERN_ALERT "Total bytes read = %d , offset is %lld \n", bytes_read, *offset);
-	return 0;
+	return bytes_read;
 }
 
 
@@ -70,21 +69,35 @@ ssize_t pa2_char_driver_write (struct file *pfile, const char __user *buffer, si
 	/* length is the length of the userspace buffer*/
 	/* current position of the opened file*/
 	/* copy_from_user function: destination is device_buffer and source is the userspace buffer *buffer */
-	int buff_size = sizeof(device_buffer);
+	// int buff_size = sizeof(device_buffer);
+  // int maximum_bytes = BUFFER_SIZE - *offset; //max bytes that can be read
+  // int bytes_to_write;
+  // int bytes_write;
+  // loff_t *temp_offset;
+  // temp_offset = offset;
+  //
+	// if (buff_size == 0) {
+  //   printk(KERN_ALERT "Buff size is == 0 \n");
+	// 	return 0;
+	// } //check if empty
+  //
+  // if (maximum_bytes > length) { //if bigger
+  //     bytes_to_write = length;
+  // }
+  // else {
+  //     temp_offset = 0;
+  //     bytes_to_write = length;
+  // }
 
-	if (buff_size == 0) {
-    printk(KERN_ALERT "Buff size is == 0 \n");
-		return 0;
-	} //check if empty
 
 //	*offset = sizeof(buffer);
 	printk(KERN_ALERT "Now writing to the device \n");
 	//use copy from user to pull in data
 	copy_from_user(device_buffer + *offset, buffer, length);
 
-  pa2_char_driver_seek(pfile,length,1); //seek to the right place, to put the cursor in the right place.
+  *offset += length;
+  printk(KERN_ALERT "The device has been written to, bytes: %lu, current offset: %lld  \n", length, *offset);
 
-	printk(KERN_ALERT "The device has been written to, bytes: %d, current offset: %lld  \n", sizeof(buffer), *offset);
 	return length;
 }
 
@@ -122,9 +135,9 @@ loff_t pa2_char_driver_seek (struct file *pfile, loff_t offset, int whence)
     current_pos = offset;
   }
 	if (whence == 1) {
-		current_pos += offset; //increment by offset
+		current_pos = pfile->f_pos + offset; //increment by offset
 	}
-	if (whence == 3) { //current position is set to offset bytes before the end of the file
+	if (whence == 2) { //current position is set to offset bytes before the end of the file
     current_pos = BUFFER_SIZE - offset;
 	}
 	if (whence != 0 && whence != 1 && whence !=2) { //if user attempts to seek before or after the file
@@ -132,12 +145,14 @@ loff_t pa2_char_driver_seek (struct file *pfile, loff_t offset, int whence)
 	}
 	if (current_pos < 0) {
 		printk(KERN_ALERT "ERROR: Cannot seek before the buffer! \n");
+    current_pos = 0;
 	}
 	if (current_pos > BUFFER_SIZE) {
 		printk(KERN_ALERT "ERROR: Cannot after before the buffer! \n");
+    current_pos = BUFFER_SIZE;
 	}
 	printk(KERN_ALERT "The current offset in this seek is: %lld \n", offset);
-
+  pfile->f_pos = current_pos;
 	return current_pos;
 }
 
@@ -149,7 +164,7 @@ struct file_operations pa2_char_driver_file_operations = {
 	.write = pa2_char_driver_write,
 	.open = pa2_char_driver_open,
 	.release = pa2_char_driver_close,
-	.llseek = pa2_char_driver_seek,
+	.llseek = pa2_char_driver_seek
 };
 
 static int pa2_char_driver_init(void)
@@ -165,7 +180,7 @@ static int pa2_char_driver_init(void)
 
   }
 	/* allocate memory to store data */
-	device_buffer = kmalloc(sizeof *device_buffer, GFP_KERNEL);
+	device_buffer = kmalloc(BUFFER_SIZE, GFP_KERNEL);
 
 //  bzero(device_buffer, BUFFER_SIZE);
 
