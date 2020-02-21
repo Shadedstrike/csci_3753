@@ -80,25 +80,7 @@ ssize_t pa2_char_driver_write (struct file *pfile, const char __user *buffer, si
 	/* length is the length of the userspace buffer*/
 	/* current position of the opened file*/
 	/* copy_from_user function: destination is device_buffer and source is the userspace buffer *buffer */
-	// int buff_size = sizeof(device_buffer);
-  // int maximum_bytes = BUFFER_SIZE - *offset; //max bytes that can be read
-  // int bytes_to_write;
-  // int bytes_write;
-  // loff_t *temp_offset;
-  // temp_offset = offset;
-  //
-	// if (buff_size == 0) {
-  //   printk(KERN_ALERT "Buff size is == 0 \n");
-	// 	return 0;
-	// } //check if empty
-  //
-  // if (maximum_bytes > length) { //if bigger
-  //     bytes_to_write = length;
-  // }
-  // else {
-  //     temp_offset = 0;
-  //     bytes_to_write = length;
-  // }
+
 
 
 //	*offset = sizeof(buffer);
