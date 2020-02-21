@@ -9,7 +9,12 @@
 #define BUFFER_SIZE 1024
 
 int main(){
-	printf("welcome to the main function\n");
+	printf("\n");
+	printf("welcome to the { B U F F E R } main function\n");
+	printf("\n");
+	printf("/////////////////////////////////////////////\n");
+
+
 	char *buffer;
 	char command_input;
 	int length, whence, new_offset;
@@ -20,9 +25,14 @@ int main(){
 	int file = open(DEVICE, O_RDWR); //open the device
 	if (file >= 0) {
 		printf("file opening status =  %d, good to go \n", file); //verify file is opened succesfully
+		printf("/////////////////////////////////////////////\n");
+		printf("\n");
+
 	}
 	else{
 		printf("file opening status =  %d, not good! \n", file);
+		printf("\n");
+
 	}
 
 	bool running = true;
@@ -32,7 +42,7 @@ int main(){
 		printf("press	'w' to write to device\n");
 		printf("press	's' to seek into device\n");
 		printf("press	'e' to exit from device\n");
-		printf("press	anything else to keep reading or writing to the device\n");
+		printf("press	'anything' else to go back to the menu!!\n");
 		printf("command$> ");
 		scanf(" %c", &command_input);
 

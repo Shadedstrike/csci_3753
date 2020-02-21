@@ -31,15 +31,26 @@ int close_count = 0;
 ssize_t pa2_char_driver_read (struct file *pfile, char __user *buffer, size_t length, loff_t *offset)
 {
   int max_bytes;
+  int bytes_to_read; //bytes in and out
+  int bytes_read;
+
+  printk(KERN_ALERT "User has entered the read function \n");
+
+  if (length > BUFFER_SIZE) {
+    printk(KERN_ALERT "ERROR:  User's input length is over buffer limits! \n");
+    length = BUFFER_SIZE;
+  }
+  if (length < 0) {
+    printk(KERN_ALERT "ERROR: User's length is negative! \n");
+    length = BUFFER_SIZE;
+  }
 	/* *buffer is the userspace buffer to where you are writing the data you want to be read from the device file*/
 	/* length is the length of the userspace buffer*/
 	/* offset will be set to current position of the opened file after read*/
 	/* copy_to_user function: source is device_buffer and destination is the userspace buffer *buffer */
   //int buff_size = strlen(device_buffer);
-  int bytes_to_read; //bytes in and out
-  int bytes_read;
   max_bytes = BUFFER_SIZE - *offset;
-  printk(KERN_ALERT "User has entered the read function \n");
+
 
   // if (strlen(buffer) == 0) {
   //   printk(KERN_ALERT "The buffer is currently empty \n");
@@ -92,6 +103,15 @@ ssize_t pa2_char_driver_write (struct file *pfile, const char __user *buffer, si
 
 //	*offset = sizeof(buffer);
 	printk(KERN_ALERT "Now writing to the device \n");
+
+  if (length > BUFFER_SIZE) {
+    printk(KERN_ALERT "ERROR:  User's input length is over buffer limits! \n");
+    length = BUFFER_SIZE;
+  }
+  if (length < 0) {
+    printk(KERN_ALERT "ERROR: User's length is negative! \n");
+    length = BUFFER_SIZE;
+  }
 	//use copy from user to pull in data
 	copy_from_user(device_buffer + *offset, buffer, length);
 
@@ -143,15 +163,17 @@ loff_t pa2_char_driver_seek (struct file *pfile, loff_t offset, int whence)
 	if (whence != 0 && whence != 1 && whence !=2) { //if user attempts to seek before or after the file
 		printk(KERN_ALERT "Wrong whence value inputted! \n");
 	}
+
+//check for out of bounds, if so, keep position where it initally was.
 	if (current_pos < 0) {
 		printk(KERN_ALERT "ERROR: Cannot seek before the buffer! \n");
-    current_pos = 0;
+    current_pos = pfile->f_pos;
 	}
 	if (current_pos > BUFFER_SIZE) {
-		printk(KERN_ALERT "ERROR: Cannot after before the buffer! \n");
-    current_pos = BUFFER_SIZE;
+		printk(KERN_ALERT "ERROR: Cannot seek past the buffer! \n");
+    current_pos = pfile->f_pos;
 	}
-	printk(KERN_ALERT "The current offset in this seek is: %lld \n", offset);
+	printk(KERN_ALERT "The current position in this seek is now: %d \n", current_pos);
   pfile->f_pos = current_pos;
 	return current_pos;
 }
